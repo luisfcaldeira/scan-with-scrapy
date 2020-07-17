@@ -1,0 +1,8 @@
+.git
+.pytest_cache
+.idea
+E_infra/A_data/varredura_noticias.db
+venv
+logs/*
+Tests/*
+requirements-dev.txt
