@@ -103,24 +103,20 @@ class PageDomainService(DomainServiceBase):
 
 
 if __name__ == '__main__':
-    def __convert_url_found(link):
-        mapper = MapperSpiderLinkToObject()
-        mapper.convert(link, UrlFoundEntityDomain)
-        return mapper.get_result()
-
-    def __get_sites_to_search_in_entity_domain():
-        site_to_search_service_base = SiteToSearchDomainService(SiteToSearchRepository(SiteToSearch()))
-        sites_to_search = site_to_search_service_base.get_all()
-        mapper = MapperModelListToObjectList()
-        mapper.convert(sites_to_search, SiteToSearchEntityDomain)
-        return mapper.get_result()
+    #
+    # def __get_sites_to_search_in_entity_domain():
+    #     site_to_search_service_base = SiteToSearchDomainService(SiteToSearchRepository(SiteToSearch()))
+    #     sites_to_search = site_to_search_service_base.get_all()
+    #     mapper = MapperModelListToObjectList()
+    #     mapper.convert(sites_to_search, SiteToSearchEntityDomain)
+    #     return mapper.get_result()
 
     link = scrapy.link.Link(url='https://www.terra.com.br' )
-    url_found = __convert_url_found(link)
+    url_found = UrlFoundEntityDomain()
+    url_found.url = 'https://www.terra.com.br'
     service_base = UrlFoundDomainService(BaseRepository(UrlFound()))
     searched_links = []
-    sites_to_search = __get_sites_to_search_in_entity_domain()
     last_url = 'http://www.meucu.com.br'
 
-    result = service_base.parse(url_found, searched_links, sites_to_search, last_url)
+    result = service_base.parse(url_found, searched_links, last_url)
     print(result)

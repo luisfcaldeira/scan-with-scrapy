@@ -84,22 +84,15 @@ class UrlFoundAppService(AppServiceBase):
     def add(self, **fields):
         self.__service_base.add(**fields)
 
-    def parse(self, link: scrapy.link.Link, searched_links: list, last_url):
+    def parse(self, link: str, searched_links: list, last_url):
+
         """ I`ll return an UrlFound model from DB """
+        if not self.__site_to_search_service_base.is_url_in_search_list(link):
+            raise SiteNotInSearchList(f"This site ({link}) is not in the list of sites to read. Ignoring...")
 
-        if not isinstance(link, scrapy.link.Link):
-            raise AttributeError("You sould pass a \'scrapy.link.Link\' type in link attribute")
-
-        if not self.__site_to_search_service_base.is_url_in_search_list(link.url):
-            raise SiteNotInSearchList(f"This site ({link.url}) is not the list of sites to read. Ignoring...")
-
-        url_found = self.__convert_url_found(link)
+        url_found = UrlFoundEntityDomain()
+        url_found.url = link
         return self.__service_base.parse(url_found, searched_links, last_url)
-
-    def __convert_url_found(self, link):
-        mapper = MapperSpiderLinkToObject()
-        mapper.convert(link, UrlFoundEntityDomain)
-        return mapper.get_result()
 
 
 class PageAppService(AppServiceBase):
