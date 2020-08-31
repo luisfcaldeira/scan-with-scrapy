@@ -3,11 +3,11 @@ from abc import abstractmethod, ABCMeta
 import scrapy
 
 from D_domain.entities.entities import UrlFoundEntityDomain, SiteToSearchEntityDomain
-from D_domain.services.domain_services import UrlFoundDomainService, SiteToSearchDomainService, PageDomainService
-from E_infra.A_data.model_context import SiteToSearch, UrlFound, Page
-from E_infra.A_data.repositories import BaseRepository, SiteToSearchRepository, PageRepository
+from D_domain.services.domain_services import UrlFoundDomainService, SiteToSearchDomainService, PageDomainService, \
+    PageElementsDomainService
+from E_infra.A_data.model_context import SiteToSearch, UrlFound, Page, PageElement
+from E_infra.A_data.repositories import BaseRepository, SiteToSearchRepository, PageRepository, PageElementsRepository
 from E_infra.B_cross_cutting.System.errors import SiteNotInSearchList
-from E_infra.B_cross_cutting.mappers import MapperSpiderLinkToObject, MapperModelListToObjectList
 
 
 class AppServiceBase(metaclass=ABCMeta):
@@ -121,12 +121,43 @@ class PageAppService(AppServiceBase):
     def get_page(self, url):
         return self.__page_service_base.get_page(url)
 
+
+
+class PageElementsAppService(AppServiceBase):
+
+    def __init__(self):
+        self.__page_elements_service_base = PageElementsDomainService(PageElementsRepository(PageElement()))
+
+    def get_all(self):
+        return self.__page_elements_service_base.get_all()
+
+    def get_by_id(self, entity_id):
+        return self.__page_elements_service_base.get_by_id(entity_id)
+
+    def get_or_create(self, **args):
+        return self.__page_elements_service_base.get_or_create(**args)
+
+    def update(self, entity):
+        self.__page_elements_service_base.update(entity)
+
+    def remove(self, entity):
+        self.__page_elements_service_base.remove(entity)
+
+    def add(self, **fields):
+        self.__page_elements_service_base.add(**fields)
+
+    def save_elements_for(self, url_id, elements_list:list):
+        self.__page_elements_service_base.save_list_for(url_id, elements_list)
+
+    def save_list(self, elements_list: list):
+        self.__page_elements_service_base.save_list(elements_list)
+
 if __name__ == '__main__':
     url_found_app_service = UrlFoundAppService()
     site_to_search_app_service = SiteToSearchAppService()
     page_app_service = PageAppService()
 
-    link = scrapy.link.Link(url='https://www.boasaude.com.br/dicionario-medico/Todos')
+    link = scrapy.link.Link(url='http://luisfcaldeira.com.br/robots.txt')
     link.nofollow = False
     url_found_model, created = url_found_app_service.get_or_create(url=link.url)
     print(type(url_found_model))
@@ -137,7 +168,7 @@ if __name__ == '__main__':
 
     last_url = ''
 
-    # url_found_app_service.parse(link, searched_links=searched_links, last_url=last_url)
+    url_found_app_service.parse(link.url, searched_links=searched_links, last_url=last_url)
     is_in_list = site_to_search_app_service.is_url_in_search_list(link.url)
 
     if is_in_list:

@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
+from peewee import DoesNotExist
 import scrapy
 
 from D_domain.entities.entities import UrlFoundEntityDomain, SiteToSearchEntityDomain
@@ -35,12 +36,17 @@ class DomainServiceBase(metaclass=ABCMeta):
     def update(self, entity):
         self.__repository.update(entity)
 
-    def remove(self, entity):
-        self.__repository.remove(entity)
+    def remove(self, entity, clause):
+        self.__repository.remove(entity).where(clause)
+
+    def remove_id(self, id):
+        self.__repository.remove_id(id)
 
     def add(self, **fields):
         self.__repository.add(**fields)
 
+    def save_list(self, element_list: list):
+        self.__repository.save_list(element_list)
 
 class SiteToSearchDomainService(DomainServiceBase):
 
@@ -50,11 +56,8 @@ class SiteToSearchDomainService(DomainServiceBase):
             # print(type(url))
             raise AttributeError("You must pass a string")
 
-        search_url = self.__extract_main_url(url) + '/'
-        try:
-            return super().repository.get_url(url=search_url)
-        except:
-            return False
+        search_url = self.__extract_main_url(url)
+        return super().repository.get_url(url=search_url)
 
     def __extract_main_url(self, url: str):
         group = split_url(url)
@@ -100,6 +103,13 @@ class PageDomainService(DomainServiceBase):
     def get_page(self, url):
 
         return super().repository.get_page(url)
+
+
+class PageElementsDomainService(DomainServiceBase):
+
+    def save_list_for(self, url_id, list):
+        super().repository.remove_url_id(url_id)
+        super().repository.save_list(list)
 
 
 if __name__ == '__main__':

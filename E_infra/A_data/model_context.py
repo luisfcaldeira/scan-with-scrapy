@@ -1,12 +1,12 @@
-from E_infra.A_data.config_db import Config
-from E_infra.B_cross_cutting.System.uteis import get_obj_name
-import peewee
+from peewee import Model, CharField, DateTimeField, ForeignKeyField, TextField, OperationalError, ProgrammingError
 import datetime
 import inspect
 
+from E_infra.A_data.config_db import Config
+from E_infra.B_cross_cutting.System.uteis import get_obj_name
 
 config_db = Config()
-db = config_db.get_db('varredura_noticias')
+db = config_db.get_db('crawling_news')
 
 
 def make_table_name(model_class):
@@ -23,7 +23,8 @@ def get_table_name(model_class):
 
     raise AttributeError("The model_class attribute must to be a class or an object. Provide a correct type")
 
-class BaseModel(peewee.Model):
+
+class BaseModel(Model):
     """Classe model base"""
 
     class Meta:
@@ -36,45 +37,95 @@ class BaseModel(peewee.Model):
 
 class SiteToSearch(BaseModel):
 
-    url = peewee.CharField(max_length=2083, unique=True)
-    first_inclusion = peewee.DateTimeField(default=datetime.datetime.now)
-    last_updated = peewee.DateTimeField(null=True)
+    url = CharField(max_length=2083, unique=True)
+    first_inclusion = DateTimeField(default=datetime.datetime.now)
+    last_updated = DateTimeField(null=True)
 
 
 class UrlFound(BaseModel):
 
-    url = peewee.CharField(max_length=2083, unique=True)
-    first_inclusion = peewee.DateTimeField(default=datetime.datetime.now)
-    last_updated = peewee.DateTimeField(null=True)
-    referral_url = peewee.CharField(max_length=2083, null=True)
+    url = CharField(max_length=2083, unique=True)
+    first_inclusion = DateTimeField(default=datetime.datetime.now)
+    last_updated = DateTimeField(null=True)
+    referral_url = CharField(max_length=2083, null=True)
 
 
 class Page(BaseModel):
 
-    url = peewee.ForeignKeyField(UrlFound)
-    date_inclusion = peewee.DateTimeField(default=datetime.datetime.now)
-    title = peewee.TextField(null=True)
-    content = peewee.TextField(null=True)
+    url = ForeignKeyField(UrlFound)
+    date_inclusion = DateTimeField(default=datetime.datetime.now)
+    title = TextField(null=True)
 
 
-if __name__ == '__main__':
+class PageElement(BaseModel):
+
+    url = ForeignKeyField(UrlFound)
+    tag = CharField(max_length=50, null=False)
+    classes = CharField(max_length=255, null=True)
+    id_attr = CharField(max_length=255, null=True)
+    value = TextField(null=False)
+    date_inclusion = DateTimeField(default=datetime.datetime.now)
+
+
+def create_tables():
+
     try:
-        SiteToSearch.create_table(safe=False)
-        # SiteToSearch.get_or_create(url="https://docs.scrapy.org/")
-        SiteToSearch.get_or_create(url="https://www.terra.com.br/")
-        SiteToSearch.get_or_create(url="https://www.r7.com/")
+
+        SiteToSearch.create_table(safe=False, )
+        # SiteToSearch.get_or_create(url="https://www.terra.com.br/")
+        # SiteToSearch.get_or_create(url="https://www.r7.com/")
+        SiteToSearch.get_or_create(url="http://g1.globo.com/")
         UrlFound.create_table(safe=False)
         Page.create_table(safe=False)
-        print("Tabelas criadas com sucesso!")
+        PageElement.create_table(safe=False)
+        print("Tabelas criadas com sucesso!\n")
 
         print(get_table_name(SiteToSearch()))
         print(get_table_name(UrlFound()))
         print(get_table_name(Page()))
+        print(get_table_name(PageElement()))
 
-    except peewee.OperationalError:
+        return True
+    except ProgrammingError:
+        print("A tabela já existe. Dropando tabelas\n")
+        delete_tables()
+    except OperationalError:
         print("Ocorreu algum erro ou há alguma tabela já existente!")
-        print(peewee.OperationalError.with_traceback())
-        print(peewee.OperationalError.mro())
+        print(OperationalError.with_traceback())
+        print(OperationalError.mro())
+
+    return False
+
+def delete_tables():
+
+    print(r'======================================== CUIDADO ========================================')
+    print(r'Você irá remover as tabelas e essa ação é irreversível! Tem certeza que deseja continuar?')
+    resposta = input(r"'s' ou 'n'. Qualquer valor para abortar.")
+    print(r'=========================================================================================')
+
+    if resposta != 's':
+        exit()
+
+    try:
+        print('Prosseguindo...\n')
+        SiteToSearch.drop_table(safe=False)
+        Page.drop_table(safe=False)
+        PageElement.drop_table(safe=False)
+        UrlFound.drop_table(safe=False)
+
+    except Exception as e:
+        print("Erro ao tentar excluir tabelas", "\n", e)
+
+    finally:
+        create_tables()
+
+if __name__ == '__main__':
+    # model = SiteToSearch()
+    # search_url = f'%terra.com.br%'
+    # result = model.select().where(SiteToSearch.url % search_url).get()
+    # print(result)
+
+    create_tables()
 
 
 

@@ -9,7 +9,7 @@ class Start:
         os.chdir(f'{path}/get_news')
         # rodar scrapy
 
-        os.system(" scrapy crawl varredura")
+        os.system(" scrapy crawl news")
 
 
 # Para testar módulo diretamente
